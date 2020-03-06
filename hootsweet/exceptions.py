@@ -6,7 +6,6 @@ class HootSuiteException(Exception):
         try:
             errors = response.json()["errors"]
             message = "{code} - {message}".format(**errors)
-
         except Exception:
             if hasattr(response, "status_code") and response.status_code == 401:
                 message = response.content.decode("utf-8")
@@ -23,4 +22,3 @@ def detect_and_raise_error(response: Response):
 
     if response.status_code == 400:
         raise BadRequest(response)
-    pass
