@@ -5,12 +5,11 @@ class HootSuiteException(Exception):
     def __init__(self, response, *args, **kwargs):
         try:
             errors = response.json()["errors"]
-            message = "{code} - {message}".format(**errors)
+            message = "{code} - {message}".format(**errors[0])
         except Exception:
-            if hasattr(response, "status_code") and response.status_code == 401:
-                message = response.content.decode("utf-8")
-            else:
-                message = response
+            message = "{} - {}".format(
+                response.status_code, response.content.decode("utf-8")
+            )
         super().__init__(message, *args, **kwargs)
 
 
@@ -65,4 +64,4 @@ def detect_and_raise_error(response: Response):
     elif status_code >= 500:
         raise ServerError(response)
     elif status_code >= 400:
-        raise BadRequest(Response)
+        raise BadRequest(response)
