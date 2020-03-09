@@ -221,6 +221,17 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xm
 
 [[package]]
 category = "dev"
+description = "Pytest Plugin to disable socket calls during tests"
+name = "pytest-socket"
+optional = false
+python-versions = "*"
+version = "0.3.3"
+
+[package.dependencies]
+pytest = ">=3.6.3"
+
+[[package]]
+category = "dev"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
@@ -318,7 +329,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "fda0d819d002a9238b4240c521b86fbbb72e87877a658927c832f3970198a02a"
+content-hash = "a506f38b473db40741abde597a11bc91c6108a212ac4039271a5496e7c7dae17"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -399,6 +410,9 @@ pyparsing = [
 pytest = [
     {file = "pytest-5.3.5-py3-none-any.whl", hash = "sha256:ff615c761e25eb25df19edddc0b970302d2a9091fbce0e7213298d85fb61fef6"},
     {file = "pytest-5.3.5.tar.gz", hash = "sha256:0d5fe9189a148acc3c3eb2ac8e1ac0742cb7618c084f3d228baaec0c254b318d"},
+]
+pytest-socket = [
+    {file = "pytest-socket-0.3.3.tar.gz", hash = "sha256:a90401b7a6db7091add1e33fc94a29dae6b449fdc469a725bd7cea303d12a7ed"},
 ]
 pyyaml = [
     {file = "PyYAML-5.3-cp27-cp27m-win32.whl", hash = "sha256:940532b111b1952befd7db542c370887a8611660d2b9becff75d39355303d82d"},
