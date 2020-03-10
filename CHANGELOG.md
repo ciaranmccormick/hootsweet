@@ -1,3 +1,8 @@
+### 0.3.0
+
+- Added OAuth2 workflow for authorization
+- Added script to obtain access token
+
 ### 0.2.0
 
 - Added basic API access authorizing using an access token
