@@ -30,7 +30,7 @@ url, state = client.authorization_url()
 token = client.fetch_token(code)
 
 # client.token now contains your authentication token
-# Step 3 refresh token periodically, this automatically calls handle_refresh
+# Step 3 (optional) refresh token periodically, this automatically calls handle_refresh
 token = client.refresh_token()
 
 # retrieve data from https://platform.hootsuite.com/v1/me
