@@ -1,25 +1,82 @@
-from typing import Dict
+from typing import Any, Dict, Tuple
 
 from hootsweet.exceptions import detect_and_raise_error
-from requests import request
+from requests.auth import HTTPBasicAuth
+from requests_oauthlib import OAuth2Session
 
 HOOTSUITE_BASE_URL = "https://platform.hootsuite.com"
+HOOTSUITE_AUTHORIZATION_URL = "%s/oauth2/auth" % HOOTSUITE_BASE_URL
+HOOTSUITE_TOKEN_URL = "%s/oauth2/token" % HOOTSUITE_BASE_URL
 API_VERSION = "v1"
 API_URL = "%s/%s" % (HOOTSUITE_BASE_URL, API_VERSION)
 
 
+def print_token(token):
+    print(token)
+
+
 class HootSweet:
-    def __init__(self, access_token=None, **kwargs):
-        self._access_token = access_token
+    def __init__(
+        self,
+        client_id,
+        client_secret,
+        token=None,
+        redirect_uri=None,
+        scope=None,
+        refresh_cb=None,
+        **kwargs,
+    ):
+        self.client_id, self.client_secret = client_id, client_secret
+        token = token or {}
+
+        self.scope = scope or "offline"
+        self.session = OAuth2Session(
+            client_id,
+            token=token,
+            redirect_uri=redirect_uri,
+            scope=self.scope,
+            token_updater=refresh_cb,
+        )
+        self.timeout = kwargs.get("timeout", None)
+
+    def __getattr__(self, name):
+        return getattr(self.session, name)
+
+    def authorization_url(self, state=None, **kwargs) -> Tuple[str, str]:
+        return self.session.authorization_url(HOOTSUITE_AUTHORIZATION_URL, state=state)
+
+    def fetch_token(self, code) -> Dict[str, Any]:
+        token = self.session.fetch_token(
+            HOOTSUITE_TOKEN_URL,
+            client_secret=self.client_secret,
+            code=code,
+            scope=self.scope,
+        )
+        return token
+
+    def refresh_token(self):
+        token = {}
+        if self.session.token_updater:
+            token = self.session.refresh_token(
+                HOOTSUITE_TOKEN_URL,
+                auth=HTTPBasicAuth(self.client_id, self.client_secret),
+            )
+            self.token_updater(token)
+        return token
 
     def _make_request(self, resource, *args, **kwargs) -> Dict:
         url = "%s/%s" % (API_URL, resource)
 
+        if self.timeout is not None and "timeout" not in kwargs:
+            kwargs["timeout"] = self.timeout
+
         method = kwargs.get("method", "POST" if "data" in kwargs else "GET")
-        headers = kwargs.get("headers", {})
-        headers.update({"Authorization": "Bearer %s" % self._access_token})
-        kwargs["headers"] = headers
-        response = request(method, url, *args, **kwargs)
+        response = self.request(method, url, *args, **kwargs)
+
+        # if the token has expired
+        if response.status_code == 401:
+            self.refresh_token()
+            response = self.request(method, url, *args, **kwargs)
 
         if not response.status_code == 200:
             raise detect_and_raise_error(response)

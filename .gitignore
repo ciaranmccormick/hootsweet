@@ -126,6 +126,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# direnv
+.envrc
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 
