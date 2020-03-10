@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from hootsweet.api import HootSweet
+from requests import Response
 
 ENDPOINT_TEST_CASES = [
     ("get_me", "https://platform.hootsuite.com/v1/me", ()),
@@ -26,15 +27,14 @@ ENDPOINT_TEST_CASES = [
 
 
 @pytest.mark.parametrize("func,expected_url,args", ENDPOINT_TEST_CASES)
-@patch("hootsweet.api.request", autospec=True)
-def test_endpoint_urls(mock_request, func, args, expected_url):
-    response = Mock(status_code=200)
-    mock_request.return_value = response
+@patch("hootsweet.api.OAuth2Session", autospec=True)
+def test_endpoint_urls(mock_session, func, args, expected_url):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
     data = {"data": {}}
     response.json.return_value = data
-    access_token = "token"
-    headers = {"Authorization": "Bearer %s" % access_token}
-    hoot_suite = HootSweet(access_token)
+    token = {"access_token": "token"}
+    hoot_suite = HootSweet("client_id", "client_secret", token=token)
     actual = getattr(hoot_suite, func)(*args)
-    mock_request.assert_called_once_with("GET", expected_url, headers=headers)
+    mock_session.return_value.request.assert_called_once_with("GET", expected_url)
     assert actual == data["data"]
