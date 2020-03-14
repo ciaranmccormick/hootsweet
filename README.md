@@ -1,5 +1,7 @@
 ## HootSweet
 
+![HootSweet](https://github.com/ciaranmccormick/hootsweet/workflows/HootSweet/badge.svg)
+
 A python API for the HootSuite REST API.
 
 ### Installation
