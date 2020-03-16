@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, Tuple
 
 from hootsweet.exceptions import detect_and_raise_error
@@ -10,9 +11,11 @@ HOOTSUITE_TOKEN_URL = "%s/oauth2/token" % HOOTSUITE_BASE_URL
 API_VERSION = "v1"
 API_URL = "%s/%s" % (HOOTSUITE_BASE_URL, API_VERSION)
 
+log = logging.getLogger(__name__)
 
-def print_token(token):
-    print(token)
+
+def default_refresh_cb(token: Dict):
+    return token
 
 
 class HootSweet:
@@ -29,42 +32,49 @@ class HootSweet:
         self.client_id, self.client_secret = client_id, client_secret
         token = token or {}
 
+        if refresh_cb is None:
+            self.refresh_cb = default_refresh_cb
+
         self.scope = scope or "offline"
         self.session = OAuth2Session(
             client_id,
             token=token,
             redirect_uri=redirect_uri,
+            auto_refresh_url=HOOTSUITE_TOKEN_URL,
             scope=self.scope,
-            token_updater=refresh_cb,
+            token_updater=self.refresh_cb,
         )
         self.timeout = kwargs.get("timeout", None)
 
     def __getattr__(self, name):
+        # Proxies any attributes from HootSweet to OAuth2Session
         return getattr(self.session, name)
 
     def authorization_url(self, state=None, **kwargs) -> Tuple[str, str]:
         return self.session.authorization_url(HOOTSUITE_AUTHORIZATION_URL, state=state)
 
     def fetch_token(self, code) -> Dict[str, Any]:
-        token = self.session.fetch_token(
+        return self.session.fetch_token(
             HOOTSUITE_TOKEN_URL,
             client_secret=self.client_secret,
             code=code,
             scope=self.scope,
         )
-        return token
 
-    def refresh_token(self):
+    def refresh_token(self) -> Dict[str, Any]:
+        """ Refreshes OAuth2 token and calls updater."""
+        log.debug("Refreshing access token.")
         token = {}
-        if self.session.token_updater:
+        if self.refresh_cb:
             token = self.session.refresh_token(
                 HOOTSUITE_TOKEN_URL,
                 auth=HTTPBasicAuth(self.client_id, self.client_secret),
             )
-            self.token_updater(token)
+            log.debug("Calling refresh callback %s." % self.refresh_cb.__name__)
+            self.refresh_cb(token)
         return token
 
-    def _make_request(self, resource, *args, **kwargs) -> Dict:
+    def _make_request(self, resource, *args, **kwargs) -> Dict[str, Any]:
         url = "%s/%s" % (API_URL, resource)
 
         if self.timeout is not None and "timeout" not in kwargs:
@@ -73,7 +83,7 @@ class HootSweet:
         method = kwargs.get("method", "POST" if "data" in kwargs else "GET")
         response = self.request(method, url, *args, **kwargs)
 
-        # if the token has expired
+        # Extra check if expires_at missing
         if response.status_code == 401:
             self.refresh_token()
             response = self.request(method, url, *args, **kwargs)

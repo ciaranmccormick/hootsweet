@@ -2,6 +2,7 @@ import argparse
 import threading
 import webbrowser
 from os import environ
+from pprint import pprint
 from urllib.parse import urlparse
 
 import cherrypy
@@ -101,6 +102,6 @@ if __name__ == "__main__":
             profile["fullName"]
         )
     )
-    print("TOKEN\n=======\n")
-    for key, value in server.client.token.items():
-        print("{} = {}".format(key, value))
+    print("TOKEN\n=======")
+    print("token = ", end="")
+    pprint(server.client.token)

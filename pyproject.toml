@@ -32,7 +32,7 @@ tox-pyenv = "^1.1.0"
 source = [".",]
 
 [tool.coverage.report]
-omit = ["*/.pyenv/*",]
+omit = ["*/.pyenv/*", "get_tokens.py"]
 
 [tool.coverage.html]
 directory = "htmlcov"

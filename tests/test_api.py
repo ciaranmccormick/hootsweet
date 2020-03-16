@@ -1,7 +1,12 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
-from hootsweet.api import HootSweet
+from hootsweet.api import (
+    HOOTSUITE_TOKEN_URL,
+    HootSweet,
+    HTTPBasicAuth,
+    default_refresh_cb,
+)
 from requests import Response
 
 ENDPOINT_TEST_CASES = [
@@ -38,3 +43,32 @@ def test_endpoint_urls(mock_session, func, args, expected_url):
     actual = getattr(hoot_suite, func)(*args)
     mock_session.return_value.request.assert_called_once_with("GET", expected_url)
     assert actual == data["data"]
+
+
+def test_default_refresh_cb():
+    expected = {"access_token": "access_token", "refresh_token": "refresh_token"}
+    actual = default_refresh_cb(expected)
+    assert expected == actual
+
+
+@patch("hootsweet.api.default_refresh_cb", autospec=True)
+@patch("hootsweet.api.OAuth2Session", autospec=True)
+def test_refresh_token(mock_session, mock_refresh_cb):
+    attrs = [
+        {"status_code": c, "json.return_value": {"data": {}}} for c in [401, 200, 200]
+    ]
+    responses = [Mock(spec=Response, **attr) for attr in attrs]
+    mock_session.return_value.request.side_effect = responses
+
+    token = {"access_token": "access_token", "refresh_token": "refresh_token"}
+    hoot_suite = HootSweet("client_id", "client_secret", token=token)
+
+    expected_url = "https://platform.hootsuite.com/v1/me"
+    hoot_suite.get_me()
+
+    calls = [call("GET", expected_url), call("GET", expected_url)]
+    assert mock_session.return_value.request.mock_calls == calls
+    mock_session.return_value.refresh_token.assert_called_once_with(
+        HOOTSUITE_TOKEN_URL, auth=HTTPBasicAuth("client_id", "client_secret")
+    )
+    mock_refresh_cb.assert_called_once()
