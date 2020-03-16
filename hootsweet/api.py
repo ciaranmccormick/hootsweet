@@ -1,7 +1,12 @@
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
-from hootsweet.exceptions import detect_and_raise_error
+from hootsweet.exceptions import (
+    InvalidLanguage,
+    InvalidTimezone,
+    detect_and_raise_error,
+)
+from hootsweet.locale import is_valid_language, is_valid_timezone
 from requests.auth import HTTPBasicAuth
 from requests_oauthlib import OAuth2Session
 
@@ -130,4 +135,61 @@ class HootSweet:
         social profile.
         """
         resource = "socialProfiles/%s/teams" % profile_id
+        return self._make_request(resource)
+
+    def get_member(self, member_id: str) -> Dict[str, Any]:
+        """Retrieves a member."""
+        resource = "members/%s" % member_id
+        return self._make_request(resource)
+
+    def create_member(
+        self,
+        full_name: str,
+        email: str,
+        organization_ids: List[int],
+        company_name: str = None,
+        bio: str = None,
+        timezone: str = "Europe/London",
+        language: str = "en",
+    ) -> Dict[str, Any]:
+        """Creates a member in a Hootsuite organization. Requires organization manage
+        members permission.
+
+        Args:
+            full_name: The member’s name.
+            email: The member’s email.
+            organization_ids: The organizations the member should be added to.
+            company_name: The member’s company name.
+            bio: The member’s bio.
+            timezone: The member's time zone. If not provided it will default to
+                'America/Vancouver'. Valid values are defined at
+                http://php.net/manual/en/timezones.php.
+            language: The member’s language.
+        """
+        resource = "members"
+        if not is_valid_language(language):
+            raise InvalidLanguage("%s is not a valid language." % language)
+
+        if not is_valid_timezone(timezone):
+            raise InvalidTimezone("%s is not a valid timezone." % timezone)
+
+        data = {
+            "fullName": full_name,
+            "email": email,
+            "organizationIds": organization_ids,
+            "timezone": timezone,
+            "language": language,
+        }
+
+        if company_name:
+            data["companyName"] = company_name
+
+        if bio:
+            data["bio"] = bio
+
+        return self._make_request(resource, data=data)
+
+    def get_member_organizations(self, member_id: str) -> List[Dict[str, Any]]:
+        """Retrieves the organizations that the member is in."""
+        resource = "members/%s/organizations" % member_id
         return self._make_request(resource)
