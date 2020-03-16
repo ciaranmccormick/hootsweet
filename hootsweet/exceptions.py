@@ -49,6 +49,14 @@ class ServerError(HootSuiteException):
     pass
 
 
+class InvalidLanguage(Exception):
+    pass
+
+
+class InvalidTimezone(Exception):
+    pass
+
+
 def detect_and_raise_error(response: Response):
     status_code = response.status_code
     if status_code == 400:

@@ -7,6 +7,7 @@ from hootsweet.api import (
     HTTPBasicAuth,
     default_refresh_cb,
 )
+from hootsweet.exceptions import InvalidLanguage, InvalidTimezone
 from requests import Response
 
 ENDPOINT_TEST_CASES = [
@@ -28,6 +29,12 @@ ENDPOINT_TEST_CASES = [
         "https://platform.hootsuite.com/v1/socialProfiles/1234/teams",
         ("1234",),
     ),
+    ("get_member", "https://platform.hootsuite.com/v1/members/1234", ("1234",)),
+    (
+        "get_member_organizations",
+        "https://platform.hootsuite.com/v1/members/1234/organizations",
+        ("1234",),
+    ),
 ]
 
 
@@ -43,6 +50,47 @@ def test_endpoint_urls(mock_session, func, args, expected_url):
     actual = getattr(hoot_suite, func)(*args)
     mock_session.return_value.request.assert_called_once_with("GET", expected_url)
     assert actual == data["data"]
+
+
+@patch("hootsweet.api.OAuth2Session", autospec=True)
+def test_create_member_endpoint_urls(mock_session):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    data = {"data": {}}
+    response.json.return_value = data
+
+    token = {"access_token": "token"}
+    hoot_suite = HootSweet("client_id", "client_secret", token=token)
+
+    args = ("Joe Bloggs", "joe.bloggs@email.com", ["1234"])
+    with pytest.raises(InvalidLanguage):
+        hoot_suite.create_member(*args, language="rr")
+
+    with pytest.raises(InvalidTimezone):
+        hoot_suite.create_member(*args, timezone="Mars/Europa")
+
+    assert mock_session.return_value.request.call_count == 0
+
+    hoot_suite.create_member(*args)
+
+    expected_url = "https://platform.hootsuite.com/v1/members"
+    expected_data = {
+        "fullName": "Joe Bloggs",
+        "email": "joe.bloggs@email.com",
+        "organizationIds": ["1234"],
+        "language": "en",
+        "timezone": "Europe/London",
+    }
+    mock_session.return_value.request.assert_called_once_with(
+        "POST", expected_url, data=expected_data
+    )
+    mock_session.return_value.request.reset_mock()
+    hoot_suite.create_member(*args, bio="a bio", company_name="ACompany")
+    expected_data["bio"] = "a bio"
+    expected_data["companyName"] = "ACompany"
+    mock_session.return_value.request.assert_called_once_with(
+        "POST", expected_url, data=expected_data
+    )
 
 
 def test_default_refresh_cb():
