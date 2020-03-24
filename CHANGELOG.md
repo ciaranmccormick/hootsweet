@@ -1,3 +1,7 @@
+#### Future
+
+- Added /messages POST endpoint
+
 ### 0.3.0
 
 - Added OAuth2 workflow for authorization
