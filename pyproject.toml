@@ -1,14 +1,25 @@
 [tool.poetry]
 name = "hootsweet"
-version = "0.3.0"
+version = "0.4.0"
 description = "A python library for the HootSuite REST API."
 authors = ["Ciaran McCormick <ciaran@ciaranmccormick.com>"]
+readme = "README.md"
+
+keywords = ["hootsuite", "api", "social"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "Natural Language :: English"
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
 requests= "^2.23"
 requests_oauthlib = "^1.3.0"
 cherrypy = "^18.5.0"
+pytz = "^2019.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -22,7 +33,7 @@ tox-pyenv = "^1.1.0"
 source = [".",]
 
 [tool.coverage.report]
-omit = ["*/.pyenv/*",]
+omit = ["*/.pyenv/*", "get_tokens.py"]
 
 [tool.coverage.html]
 directory = "htmlcov"
