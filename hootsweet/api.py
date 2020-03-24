@@ -1,4 +1,6 @@
+import json
 import logging
+from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
 from hootsweet.exceptions import (
@@ -15,6 +17,7 @@ HOOTSUITE_AUTHORIZATION_URL = "%s/oauth2/auth" % HOOTSUITE_BASE_URL
 HOOTSUITE_TOKEN_URL = "%s/oauth2/token" % HOOTSUITE_BASE_URL
 API_VERSION = "v1"
 API_URL = "%s/%s" % (HOOTSUITE_BASE_URL, API_VERSION)
+ISO_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +88,7 @@ class HootSweet:
         if self.timeout is not None and "timeout" not in kwargs:
             kwargs["timeout"] = self.timeout
 
-        method = kwargs.get("method", "POST" if "data" in kwargs else "GET")
+        method = kwargs.pop("method", "POST" if "data" in kwargs else "GET")
         response = self.request(method, url, *args, **kwargs)
 
         # Extra check if expires_at missing
@@ -193,3 +196,28 @@ class HootSweet:
         """Retrieves the organizations that the member is in."""
         resource = "members/%s/organizations" % member_id
         return self._make_request(resource)
+
+    def schedule_message(
+        self, text: str, social_profile_ids: List[str], send_time: datetime, **kwargs
+    ):
+        """Schedules a message to send on one or more social profiles
+        (except Pinterest). Returns an array of uniquely identifiable messages
+        (one per social profile requested).
+
+        Scheduling a message to Pinterest can not be bundled with any other social
+        profiles.
+        """
+        resource = "messages"
+        assert isinstance(send_time, datetime), "send_time must be a datetime"
+
+        # assume send_time in UTC time
+        send_time_str = send_time.strftime(ISO_FORMAT)
+        data = {
+            "text": text,
+            "socialProfileIds": social_profile_ids,
+            "scheduledSendTime": send_time_str,
+            "emailNotification": False,
+        }
+        data.update(kwargs)
+        json_ = json.dumps(data)
+        return self._make_request(resource, method="POST", json=json_)

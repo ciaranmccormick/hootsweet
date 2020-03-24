@@ -1,8 +1,11 @@
+import datetime
+import json
 from unittest.mock import Mock, call, patch
 
 import pytest
 from hootsweet.api import (
     HOOTSUITE_TOKEN_URL,
+    ISO_FORMAT,
     HootSweet,
     HTTPBasicAuth,
     default_refresh_cb,
@@ -50,6 +53,33 @@ def test_endpoint_urls(mock_session, func, args, expected_url):
     actual = getattr(hoot_suite, func)(*args)
     mock_session.return_value.request.assert_called_once_with("GET", expected_url)
     assert actual == data["data"]
+
+
+@patch("hootsweet.api.OAuth2Session", autospec=True)
+def test_schedule_message(mock_session):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    data = {"data": {}}
+    response.json.return_value = data
+    token = {"access_token": "token"}
+    hoot_suite = HootSweet("client_id", "client_secret", token=token)
+    text = "An"
+    text = "An example message."
+    ids_ = ["1234", "12345"]
+    send_time = datetime.datetime(2020, 1, 1, 13, 10, 14)
+    hoot_suite.schedule_message(text, ids_, send_time=send_time)
+    expected_json = json.dumps(
+        {
+            "text": text,
+            "socialProfileIds": ids_,
+            "scheduledSendTime": send_time.strftime(ISO_FORMAT),
+            "emailNotification": False,
+        }
+    )
+    expected_url = "https://platform.hootsuite.com/v1/messages"
+    mock_session.return_value.request.assert_called_once_with(
+        "POST", expected_url, json=expected_json
+    )
 
 
 @patch("hootsweet.api.OAuth2Session", autospec=True)
