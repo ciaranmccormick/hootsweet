@@ -221,3 +221,11 @@ class HootSweet:
         data.update(kwargs)
         json_ = json.dumps(data)
         return self._make_request(resource, method="POST", json=json_)
+
+    def get_message(self, message_id: str) -> Dict[str, Any]:
+        resource = "messages/%s" % message_id
+        return self._make_request(resource)
+
+    def delete_message(self, message_id: str) -> Dict[str, Any]:
+        resource = "messages/%s" % message_id
+        return self._make_request(resource, method="DELETE")

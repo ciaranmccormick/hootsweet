@@ -38,12 +38,31 @@ ENDPOINT_TEST_CASES = [
         "https://platform.hootsuite.com/v1/members/1234/organizations",
         ("1234",),
     ),
+    ("get_message", "https://platform.hootsuite.com/v1/messages/1234", ("1234",)),
 ]
+
+DELETE_ENDPOINTS = [
+    ("delete_message", "https://platform.hootsuite.com/v1/messages/1234", ("1234",)),
+]
+
+
+@pytest.mark.parametrize("func,expected_url,args", DELETE_ENDPOINTS)
+@patch("hootsweet.api.OAuth2Session", autospec=True)
+def test_endpoint_urls(mock_session, func, args, expected_url):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    data = {"data": {}}
+    response.json.return_value = data
+    token = {"access_token": "token"}
+    hoot_suite = HootSweet("client_id", "client_secret", token=token)
+    actual = getattr(hoot_suite, func)(*args)
+    mock_session.return_value.request.assert_called_once_with("DELETE", expected_url)
+    assert actual == data["data"]
 
 
 @pytest.mark.parametrize("func,expected_url,args", ENDPOINT_TEST_CASES)
 @patch("hootsweet.api.OAuth2Session", autospec=True)
-def test_endpoint_urls(mock_session, func, args, expected_url):
+def test_delete_endpoint_urls(mock_session, func, args, expected_url):
     response = Mock(status_code=200, spec=Response)
     mock_session.return_value.request.return_value = response
     data = {"data": {}}
