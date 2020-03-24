@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
+from hootsweet.constants import Reviewer
 from hootsweet.exceptions import (
     InvalidLanguage,
     InvalidTimezone,
@@ -223,9 +224,26 @@ class HootSweet:
         return self._make_request(resource, method="POST", json=json_)
 
     def get_message(self, message_id: str) -> Dict[str, Any]:
+        """Retrieves a message. A message is always associated with a single social
+        profile. Messages might be unavailable for a brief time during upload to
+        social networks.
+        """
         resource = "messages/%s" % message_id
         return self._make_request(resource)
 
     def delete_message(self, message_id: str) -> Dict[str, Any]:
+        """Deletes a message. A message is always associated with a single social
+        profile.
+        """
         resource = "messages/%s" % message_id
         return self._make_request(resource, method="DELETE")
+
+    def approve_message(
+        self, message_id: str, sequence_number: int, reviewer_type: Reviewer
+    ):
+        """Approve a message.
+        """
+        resource = "messages/%s/approve" % message_id
+        data = {"sequenceNumber": sequence_number, "reviewerType": reviewer_type.name}
+        json_ = json.dumps(data)
+        return self._make_request(resource, method="POST", json=json_)

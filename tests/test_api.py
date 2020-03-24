@@ -10,6 +10,7 @@ from hootsweet.api import (
     HTTPBasicAuth,
     default_refresh_cb,
 )
+from hootsweet.constants import Reviewer
 from hootsweet.exceptions import InvalidLanguage, InvalidTimezone
 from requests import Response
 
@@ -82,7 +83,6 @@ def test_schedule_message(mock_session):
     response.json.return_value = data
     token = {"access_token": "token"}
     hoot_suite = HootSweet("client_id", "client_secret", token=token)
-    text = "An"
     text = "An example message."
     ids_ = ["1234", "12345"]
     send_time = datetime.datetime(2020, 1, 1, 13, 10, 14)
@@ -96,6 +96,31 @@ def test_schedule_message(mock_session):
         }
     )
     expected_url = "https://platform.hootsuite.com/v1/messages"
+    mock_session.return_value.request.assert_called_once_with(
+        "POST", expected_url, json=expected_json
+    )
+
+
+@patch("hootsweet.api.OAuth2Session", autospec=True)
+def test_approve_message(mock_session):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    data = {"data": {}}
+    response.json.return_value = data
+    token = {"access_token": "token"}
+    hoot_suite = HootSweet("client_id", "client_secret", token=token)
+
+    message_id = "1234"
+    sequence = 11
+    reviewer_type = Reviewer.EXTERNAL
+
+    hoot_suite.approve_message(
+        message_id=message_id, sequence_number=sequence, reviewer_type=Reviewer.EXTERNAL
+    )
+    expected_json = json.dumps(
+        {"sequenceNumber": sequence, "reviewerType": reviewer_type.name}
+    )
+    expected_url = "https://platform.hootsuite.com/v1/messages/%s/approve" % message_id
     mock_session.return_value.request.assert_called_once_with(
         "POST", expected_url, json=expected_json
     )
