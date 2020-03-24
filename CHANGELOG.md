@@ -1,6 +1,11 @@
-#### Future
+### Future
+
+### 0.4.0
 
 - Added /messages POST endpoint
+- Added /messages/{id}/approve
+- Added /messages GET
+- Added /messages DELETE
 
 ### 0.3.0
 
