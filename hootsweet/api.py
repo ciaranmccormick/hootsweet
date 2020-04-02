@@ -41,7 +41,8 @@ class HootSweet:
         self.client_id, self.client_secret = client_id, client_secret
         token = token or {}
 
-        if refresh_cb is None:
+        self.refresh_cb = refresh_cb
+        if self.refresh_cb is None:
             self.refresh_cb = default_refresh_cb
 
         self.scope = scope or "offline"
@@ -221,7 +222,7 @@ class HootSweet:
         }
         data.update(kwargs)
         json_ = json.dumps(data)
-        return self._make_request(resource, method="POST", json=json_)
+        return self._make_request(resource, method="POST", data=json_)
 
     def get_message(self, message_id: str) -> Dict[str, Any]:
         """Retrieves a message. A message is always associated with a single social
@@ -246,4 +247,4 @@ class HootSweet:
         resource = "messages/%s/approve" % message_id
         data = {"sequenceNumber": sequence_number, "reviewerType": reviewer_type.name}
         json_ = json.dumps(data)
-        return self._make_request(resource, method="POST", json=json_)
+        return self._make_request(resource, method="POST", data=json_)
