@@ -90,6 +90,10 @@ class HootSweet:
         if self.timeout is not None and "timeout" not in kwargs:
             kwargs["timeout"] = self.timeout
 
+        expires_in = self.token.get("expires_in", 0)
+        if expires_in <= 0:
+            self.refresh_token()
+
         method = kwargs.pop("method", "POST" if "data" in kwargs else "GET")
         response = self.request(method, url, *args, **kwargs)
 
