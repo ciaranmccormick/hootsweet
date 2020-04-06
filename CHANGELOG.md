@@ -1,5 +1,10 @@
 ### Future
 
+
+### 0.5.0
+
+- Improvements to refresh token callback
+
 ### 0.4.0
 
 - Added /messages POST endpoint
