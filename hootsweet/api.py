@@ -105,7 +105,10 @@ class HootSweet:
         if not response.status_code == 200:
             raise detect_and_raise_error(response)
         else:
-            return response.json()["data"]
+            if method == "DELETE":
+                return {}
+            else:
+                return response.json()["data"]
 
     def get_me(self) -> Dict:
         """ Retrieves authenticated member"""
