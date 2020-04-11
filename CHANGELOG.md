@@ -1,6 +1,7 @@
 ### Future
 
 - Retrieve outbound messages
+- Reject messages
 
 ### 0.5.1
 

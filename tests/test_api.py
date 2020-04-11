@@ -140,6 +140,36 @@ def test_approve_message(mock_session):
 
 
 @patch("hootsweet.api.OAuth2Session", spec=OAuth2Session, token=test_token)
+def test_reject_message(mock_session):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    data = {"data": {}}
+    response.json.return_value = data
+    hoot_suite = HootSweet("client_id", "client_secret", token=test_token)
+
+    message_id = "1234"
+    reason = "Message contains profanity"
+    sequence = 11
+    reviewer_type = Reviewer.EXTERNAL
+
+    hoot_suite.reject_message(
+        message_id=message_id,
+        reason=reason,
+        sequence=sequence,
+        reviewer_type=Reviewer.EXTERNAL,
+    )
+    expected_data = {
+        "sequenceNumber": sequence,
+        "reviewerType": reviewer_type.name,
+        "reason": reason,
+    }
+    expected_url = "https://platform.hootsuite.com/v1/messages/%s/reject" % message_id
+    mock_session.return_value.request.assert_called_once_with(
+        "POST", expected_url, data=expected_data
+    )
+
+
+@patch("hootsweet.api.OAuth2Session", spec=OAuth2Session, token=test_token)
 def test_create_member_endpoint_urls(mock_session):
     response = Mock(status_code=200, spec=Response)
     mock_session.return_value.request.return_value = response
