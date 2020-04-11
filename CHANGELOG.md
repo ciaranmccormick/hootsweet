@@ -1,5 +1,7 @@
 ### Future
 
+### 0.6.0
+
 - Added method to get outbound messages
 - Added method to reject messages
 - Added method to get message review history
