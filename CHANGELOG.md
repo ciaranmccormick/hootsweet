@@ -1,5 +1,7 @@
 ### Future
 
+- Retrieve outbound messages
+
 ### 0.5.1
 
 - Bug fix for issue [#11](https://github.com/ciaranmccormick/hootsweet/issues/11)
