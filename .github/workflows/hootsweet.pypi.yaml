@@ -1,31 +1,24 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: HootSweet
+name: hootsweet-pypi
 
 on:
   push:
-    branches:
-      - "*"
+    tags: "*"
 
 jobs:
-  testing:
-    name: testing
+  publish:
+    name: publish
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Setup Python 3
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+          python-version: "3.x"
 
       - name: Install Poetry
         uses: dschep/install-poetry-action@v1.2
@@ -52,3 +45,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           poetry run pytest --cov=hootsweet --cov-branch --cov-fail-under=90 tests/
+
+      - name: Publish to pypi
+        run: |
+          poetry publish --username ${{ secrets.PYPI_USERNAME }} --password ${{ secrets.PYPI_PASSWORD }} --build
