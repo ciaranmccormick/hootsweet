@@ -6,7 +6,7 @@ name: HootSweet
 on:
   push:
     branches:
-      - "*"
+      - "feature/*"
 
 jobs:
   testing:
