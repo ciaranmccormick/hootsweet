@@ -303,3 +303,9 @@ class HootSweet:
         if reviewer_type is not None:
             data["reviewerType"] = reviewer_type.name
         return self._make_request(resource, method="POST", data=data)
+
+    def get_message_review_history(
+        self, message_id: str
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        resource = "messages/%s/history" % message_id
+        return self._make_request(resource)
