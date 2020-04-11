@@ -288,3 +288,18 @@ class HootSweet:
         data = {"sequenceNumber": sequence_number, "reviewerType": reviewer_type.name}
         json_ = json.dumps(data)
         return self._make_request(resource, method="POST", data=json_)
+
+    def reject_message(
+        self,
+        message_id: str,
+        reason: str,
+        sequence: int,
+        reviewer_type: Reviewer = None,
+        **kwargs,
+    ):
+        resource = "messages/%s/reject" % message_id
+        data = {"reason": reason, "sequenceNumber": sequence}
+
+        if reviewer_type is not None:
+            data["reviewerType"] = reviewer_type.name
+        return self._make_request(resource, method="POST", data=data)
