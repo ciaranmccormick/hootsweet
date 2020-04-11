@@ -14,9 +14,10 @@ jobs:
 
     steps:
       - shell: bash
-      - env:
+        env:
           USERNAME: ${{ secrets.PYPI_USERNAME }}
           PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
       - uses: actions/checkout@v2
 
       - name: Setup Python 3
