@@ -50,6 +50,12 @@ GET_ENDPOINTS = [
         {},
     ),
     ("get_message", "https://platform.hootsuite.com/v1/messages/1234", ("1234",), {}),
+    (
+        "get_message_review_history",
+        "https://platform.hootsuite.com/v1/messages/1234/history",
+        ("1234",),
+        {},
+    ),
 ]
 
 DELETE_ENDPOINTS = [
