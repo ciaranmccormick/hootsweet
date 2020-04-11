@@ -1,6 +1,6 @@
 import datetime
 import json
-from unittest.mock import Mock, PropertyMock, call, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 from hootsweet.api import (
@@ -10,37 +10,52 @@ from hootsweet.api import (
     HTTPBasicAuth,
     default_refresh_cb,
 )
-from hootsweet.constants import Reviewer
+from hootsweet.constants import MessageState, Reviewer
 from hootsweet.exceptions import InvalidLanguage, InvalidTimezone
 from requests import Response
 from requests_oauthlib import OAuth2Session
 
-ENDPOINT_TEST_CASES = [
-    ("get_me", "https://platform.hootsuite.com/v1/me", ()),
-    ("get_me_organizations", "https://platform.hootsuite.com/v1/me/organizations", ()),
+GET_ENDPOINTS = [
+    ("get_me", "https://platform.hootsuite.com/v1/me", (), {}),
+    (
+        "get_me_organizations",
+        "https://platform.hootsuite.com/v1/me/organizations",
+        (),
+        {},
+    ),
     (
         "get_me_social_profiles",
         "https://platform.hootsuite.com/v1/me/socialProfiles",
         (),
+        {},
     ),
-    ("get_social_profiles", "https://platform.hootsuite.com/v1/socialProfiles", ()),
+    ("get_social_profiles", "https://platform.hootsuite.com/v1/socialProfiles", (), {}),
     (
         "get_social_profile",
         "https://platform.hootsuite.com/v1/socialProfiles/1234",
         ("1234",),
+        {},
     ),
     (
         "get_social_profile_teams",
         "https://platform.hootsuite.com/v1/socialProfiles/1234/teams",
         ("1234",),
+        {},
     ),
-    ("get_member", "https://platform.hootsuite.com/v1/members/1234", ("1234",)),
+    ("get_member", "https://platform.hootsuite.com/v1/members/1234", ("1234",), {}),
     (
         "get_member_organizations",
         "https://platform.hootsuite.com/v1/members/1234/organizations",
         ("1234",),
+        {},
     ),
-    ("get_message", "https://platform.hootsuite.com/v1/messages/1234", ("1234",)),
+    ("get_message", "https://platform.hootsuite.com/v1/messages/1234", ("1234",), {}),
+    (
+        "get_message_review_history",
+        "https://platform.hootsuite.com/v1/messages/1234/history",
+        ("1234",),
+        {},
+    ),
 ]
 
 DELETE_ENDPOINTS = [
@@ -56,7 +71,7 @@ test_token = {
 
 @pytest.mark.parametrize("func,expected_url,args", DELETE_ENDPOINTS)
 @patch("hootsweet.api.OAuth2Session", spec=OAuth2Session, token=test_token)
-def test_endpoint_urls(mock_session, func, args, expected_url):
+def test_delete_endpoint_urls(mock_session, func, args, expected_url):
     response = Mock(status_code=200, spec=Response)
     mock_session.return_value.request.return_value = response
     data = {"data": {}}
@@ -67,16 +82,16 @@ def test_endpoint_urls(mock_session, func, args, expected_url):
     assert actual == data["data"]
 
 
-@pytest.mark.parametrize("func,expected_url,args", ENDPOINT_TEST_CASES)
+@pytest.mark.parametrize("func,expected_url,args,kwargs", GET_ENDPOINTS)
 @patch("hootsweet.api.OAuth2Session", spec=OAuth2Session, token=test_token)
-def test_delete_endpoint_urls(mock_session, func, args, expected_url):
+def test_get_endpoint_urls(mock_session, func, args, kwargs, expected_url):
     response = Mock(status_code=200, spec=Response)
     mock_session.return_value.request.return_value = response
     data = {"data": {}}
     response.json.return_value = data
     token = {"access_token": "token"}
     hoot_suite = HootSweet("client_id", "client_secret", token=token)
-    actual = getattr(hoot_suite, func)(*args)
+    actual = getattr(hoot_suite, func)(*args, **kwargs)
     mock_session.return_value.request.assert_called_once_with("GET", expected_url)
     assert actual == data["data"]
 
@@ -127,6 +142,36 @@ def test_approve_message(mock_session):
     expected_url = "https://platform.hootsuite.com/v1/messages/%s/approve" % message_id
     mock_session.return_value.request.assert_called_once_with(
         "POST", expected_url, data=expected_json
+    )
+
+
+@patch("hootsweet.api.OAuth2Session", spec=OAuth2Session, token=test_token)
+def test_reject_message(mock_session):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    data = {"data": {}}
+    response.json.return_value = data
+    hoot_suite = HootSweet("client_id", "client_secret", token=test_token)
+
+    message_id = "1234"
+    reason = "Message contains profanity"
+    sequence = 11
+    reviewer_type = Reviewer.EXTERNAL
+
+    hoot_suite.reject_message(
+        message_id=message_id,
+        reason=reason,
+        sequence=sequence,
+        reviewer_type=Reviewer.EXTERNAL,
+    )
+    expected_data = {
+        "sequenceNumber": sequence,
+        "reviewerType": reviewer_type.name,
+        "reason": reason,
+    }
+    expected_url = "https://platform.hootsuite.com/v1/messages/%s/reject" % message_id
+    mock_session.return_value.request.assert_called_once_with(
+        "POST", expected_url, data=expected_data
     )
 
 
@@ -217,3 +262,38 @@ def test_negative_expires_in(mock_session):
         HOOTSUITE_TOKEN_URL, auth=HTTPBasicAuth("client_id", "client_secret")
     )
     mock_refresh_cb.assert_called_once()
+
+
+@patch("hootsweet.api.OAuth2Session", spec=OAuth2Session, token=test_token)
+def test_get_outbound_messages(mock_session):
+    expected_url = "https://platform.hootsuite.com/v1/messages"
+    args = (
+        datetime.datetime(2020, 1, 1, 12, 1, 1),
+        datetime.datetime(2020, 1, 2, 12, 1, 1),
+    )
+    kwargs = {
+        "state": MessageState.SENT,
+        "social_profile_ids": [123, 456],
+        "include_unscheduled_review_messages": True,
+    }
+
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    data = {"data": {}}
+    response.json.return_value = data
+    token = {"access_token": "token"}
+    hoot_suite = HootSweet("client_id", "client_secret", token=token)
+    actual = hoot_suite.get_outbound_messages(*args, **kwargs)
+
+    expected_params = {
+        "startTime": args[0].strftime(ISO_FORMAT),
+        "endTime": args[1].strftime(ISO_FORMAT),
+        "state": kwargs["state"].name,
+        "limit": 50,
+        "socialProfileIds": kwargs["social_profile_ids"],
+        "includeUnscheduledReviewMsgs": True,
+    }
+    mock_session.return_value.request.assert_called_once_with(
+        "GET", expected_url, params=expected_params
+    )
+    assert actual == data["data"]

@@ -1,5 +1,11 @@
 ### Future
 
+### 0.6.0
+
+- Added method to get outbound messages
+- Added method to reject messages
+- Added method to get message review history
+
 ### 0.5.1
 
 - Bug fix for issue [#11](https://github.com/ciaranmccormick/hootsweet/issues/11)

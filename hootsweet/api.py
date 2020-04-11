@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from hootsweet.constants import Reviewer
+from hootsweet.constants import MessageState, Reviewer
 from hootsweet.exceptions import (
     InvalidLanguage,
     InvalidTimezone,
@@ -97,7 +97,6 @@ class HootSweet:
         method = kwargs.pop("method", "POST" if "data" in kwargs else "GET")
         response = self.request(method, url, *args, **kwargs)
 
-        # Extra check if expires_at missing
         if response.status_code == 401:
             self.refresh_token()
             response = self.request(method, url, *args, **kwargs)
@@ -231,6 +230,40 @@ class HootSweet:
         json_ = json.dumps(data)
         return self._make_request(resource, method="POST", data=json_)
 
+    def get_outbound_messages(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        state: MessageState = None,
+        social_profile_ids: List[int] = None,
+        limit: int = 50,
+        include_unscheduled_review_messages: bool = None,
+        **kwargs,
+    ) -> List[Dict[str, Any]]:
+        """Retrieves a list of outbound messages."""
+
+        resource = "messages"
+        params = {}
+
+        assert isinstance(start_time, datetime), "start_time must be a datetime"
+        params["startTime"] = start_time.strftime(ISO_FORMAT)
+
+        assert isinstance(end_time, datetime), "end_time must be a datetime"
+        params["endTime"] = end_time.strftime(ISO_FORMAT)
+
+        params["limit"] = limit
+
+        if state is not None:
+            params["state"] = state.name
+
+        if social_profile_ids is not None:
+            params["socialProfileIds"] = social_profile_ids
+
+        if include_unscheduled_review_messages is not None:
+            params["includeUnscheduledReviewMsgs"] = include_unscheduled_review_messages
+
+        return self._make_request(resource, params=params)
+
     def get_message(self, message_id: str) -> Dict[str, Any]:
         """Retrieves a message. A message is always associated with a single social
         profile. Messages might be unavailable for a brief time during upload to
@@ -255,3 +288,24 @@ class HootSweet:
         data = {"sequenceNumber": sequence_number, "reviewerType": reviewer_type.name}
         json_ = json.dumps(data)
         return self._make_request(resource, method="POST", data=json_)
+
+    def reject_message(
+        self,
+        message_id: str,
+        reason: str,
+        sequence: int,
+        reviewer_type: Reviewer = None,
+        **kwargs,
+    ):
+        resource = "messages/%s/reject" % message_id
+        data = {"reason": reason, "sequenceNumber": sequence}
+
+        if reviewer_type is not None:
+            data["reviewerType"] = reviewer_type.name
+        return self._make_request(resource, method="POST", data=data)
+
+    def get_message_review_history(
+        self, message_id: str
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        resource = "messages/%s/history" % message_id
+        return self._make_request(resource)
