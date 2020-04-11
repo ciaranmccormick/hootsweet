@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hootsweet"
-version = "0.5.1"
+version = "0.6.5"
 description = "A python library for the HootSuite REST API."
 authors = ["Ciaran McCormick <ciaran@ciaranmccormick.com>"]
 readme = "README.md"
