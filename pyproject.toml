@@ -28,6 +28,7 @@ pytest-socket = "^0.3.3"
 coverage = {extras = ["toml"], version = "^5.0.3"}
 tox = "^3.14.5"
 tox-pyenv = "^1.1.0"
+pytest-cov = "^2.8.1"
 
 [tool.coverage.run]
 source = [".",]
@@ -48,7 +49,7 @@ envlist = py36, py37, py38
 whitelist_externals = poetry
 commands =
     poetry install -v
-    poetry run pytest tests/
+    poetry run pytest --cov=hootsweet --cov-branch --cov-fail-under=95 tests/
 """
 
 [build-system]

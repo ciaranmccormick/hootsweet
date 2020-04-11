@@ -48,5 +48,4 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          poetry run coverage run -m pytest --cov-fail-under=90
-          poetry run coverage report
+          poetry run pytest --cov=hootsweet --cov-branch --cov-fail-under=90 tests/
