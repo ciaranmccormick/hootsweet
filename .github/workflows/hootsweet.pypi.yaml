@@ -13,11 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - shell: bash
-        env:
-          USERNAME: ${{ secrets.PYPI_USERNAME }}
-          PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-
       - uses: actions/checkout@v2
 
       - name: Setup Python 3
@@ -52,6 +47,10 @@ jobs:
           poetry run pytest --cov=hootsweet --cov-branch --cov-fail-under=90 tests/
 
       - name: Publish to pypi
+        shell: bash
+        env:
+          USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           poetry build
           poetry publish --username "$USERNAME" --password "$PASSWORD"
