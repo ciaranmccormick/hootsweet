@@ -6,7 +6,8 @@ name: HootSweet
 on: [push]
 
 jobs:
-  build:
+  testing:
+    name: testing
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -47,5 +48,5 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          poetry run coverage run -m pytest
+          poetry run coverage run -m pytest --cov-fail-under=90
           poetry run coverage report
