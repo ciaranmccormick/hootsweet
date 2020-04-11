@@ -1,6 +1,10 @@
-## HootSweet
+## Hootsweet
 
 ![HootSweet](https://github.com/ciaranmccormick/hootsweet/workflows/HootSweet/badge.svg)
+![PyPI](https://img.shields.io/pypi/v/hootsweet)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/hootsweet)
+![PyPI - Format](https://img.shields.io/pypi/format/hootsweet)
+[![Requirements Status](https://requires.io/github/ciaranmccormick/hootsweet/requirements.svg?branch=develop)](https://requires.io/github/ciaranmccormick/hootsweet/requirements/?branch=develop)
 
 A python API for the HootSuite REST API.
 
