@@ -1,3 +1,12 @@
+"""
+HootSweet Client
+================
+
+This module provides a client, HootSweet, to interact with the Hootsuite REST 1.0
+API.
+
+"""
+
 import json
 import logging
 from datetime import datetime
@@ -28,13 +37,26 @@ def default_refresh_cb(token: Dict):
 
 
 class HootSweet:
+    """A client for interacting with the Hootsuite REST API.
+
+    Args:
+        client_id (str): A Hootsuite client id.
+        client_secret (str): A Hootsuite client secret.
+        token (Dict): A token dictionary containing the `access_token`,
+            `refresh_token`, `expires_on` and `expires_in` keys.
+        redirect_uri (str): The callback uri registered with Hootsuite.
+        scope (str): The OAuth2 scope.
+        refresh_cb (callable): A function to be called when a token is refreshed.
+
+    """
+
     def __init__(
         self,
-        client_id,
-        client_secret,
-        token=None,
-        redirect_uri=None,
-        scope=None,
+        client_id: str,
+        client_secret: str,
+        token: Dict = None,
+        redirect_uri: str = None,
+        scope: str = "offline",
         refresh_cb=None,
         **kwargs,
     ):
@@ -45,7 +67,7 @@ class HootSweet:
         if self.refresh_cb is None:
             self.refresh_cb = default_refresh_cb
 
-        self.scope = scope or "offline"
+        self.scope = scope
         self.session = OAuth2Session(
             client_id,
             token=token,
@@ -60,10 +82,23 @@ class HootSweet:
         # Proxies any attributes from HootSweet to OAuth2Session
         return getattr(self.session, name)
 
-    def authorization_url(self, state=None, **kwargs) -> Tuple[str, str]:
+    def authorization_url(self, state: str = None, **kwargs) -> Tuple[str, str]:
+        """Get a Hootsuite authorization url.
+
+        Args:
+            state (str): An opaque value used by the client to maintain
+                state between the request and callback.
+
+        """
         return self.session.authorization_url(HOOTSUITE_AUTHORIZATION_URL, state=state)
 
-    def fetch_token(self, code) -> Dict[str, Any]:
+    def fetch_token(self, code: str) -> Dict[str, Any]:
+        """Fetch a Hootsuite OAuth2 token.
+
+        Args:
+            code (str): The authorization code obtained from Hootsuite.
+
+        """
         return self.session.fetch_token(
             HOOTSUITE_TOKEN_URL,
             client_secret=self.client_secret,
@@ -72,7 +107,7 @@ class HootSweet:
         )
 
     def refresh_token(self) -> Dict[str, Any]:
-        """ Refreshes OAuth2 token and calls updater."""
+        """ Refresh the OAuth2 token and call token updater."""
         log.debug("Refreshing access token.")
         token = {}
         if self.refresh_cb:
@@ -110,46 +145,57 @@ class HootSweet:
                 return response.json()["data"]
 
     def get_me(self) -> Dict:
-        """ Retrieves authenticated member"""
+        """ Retrieve the currently authenticated member."""
         resource = "me"
         return self._make_request(resource)
 
     def get_me_organizations(self) -> Dict:
-        """ Retrieves the organizations that the authenticated member is in."""
+        """ Retrieve the organizations that the authenticated member is in."""
         resource = "me/organizations"
         return self._make_request(resource)
 
     def get_me_social_profiles(self) -> Dict:
-        """ Retrieves the social media profiles that the authenticated user has
-        BASIC_USAGE permissions on."""
+        """Retrieve the social media profiles that the authenticated user has
+        basic usage permissions on.
+
+        """
         resource = "me/socialProfiles"
         return self._make_request(resource)
 
     def get_social_profiles(self) -> Dict:
-        """ Retrieves the social profiles that the authenticated user has access to."""
+        """Retrieve the social profiles that the authenticated user has access to.
+
+        """
         resource = "socialProfiles"
         return self._make_request(resource)
 
     def get_social_profile(self, profile_id: int) -> Dict:
         """Retrieve a social profile.
 
-        Requires BASIC_USAGE permission on the social profile.
+        Args:
+            profile_id (int): The social profile id.
+
         """
         resource = "socialProfiles/%s" % profile_id
         return self._make_request(resource)
 
-    def get_social_profile_teams(self, profile_id: int) -> Dict:
-        """Retrieves a list of team IDs with access to a social profile.
+    def get_social_profile_teams(self, profile_id: int) -> List:
+        """ Retrieve a list of team IDs with access to a social profile.
 
-        Requires BASIC_USAGE permission on the social profile or
-        ORG_MANAGE_SOCIAL_PROFILE permission on the organization that owns the
-        social profile.
+        Args:
+            profile_id (int): The social profile id.
+
         """
         resource = "socialProfiles/%s/teams" % profile_id
         return self._make_request(resource)
 
     def get_member(self, member_id: str) -> Dict[str, Any]:
-        """Retrieves a member."""
+        """Retrieve a member.
+
+        Args:
+            member_id (str): The Hootsuite member id.
+
+        """
         resource = "members/%s" % member_id
         return self._make_request(resource)
 
@@ -163,19 +209,18 @@ class HootSweet:
         timezone: str = "Europe/London",
         language: str = "en",
     ) -> Dict[str, Any]:
-        """Creates a member in a Hootsuite organization. Requires organization manage
-        members permission.
+        """Create a member in a Hootsuite organization.
 
         Args:
-            full_name: The member’s name.
-            email: The member’s email.
-            organization_ids: The organizations the member should be added to.
-            company_name: The member’s company name.
-            bio: The member’s bio.
-            timezone: The member's time zone. If not provided it will default to
-                'America/Vancouver'. Valid values are defined at
-                http://php.net/manual/en/timezones.php.
-            language: The member’s language.
+            full_name (str): The member’s name.
+            email (str): The member’s email.
+            organization_ids (List[int]): The organizations the member should be
+                added to.
+            company_name (str): The member’s company name.
+            bio (str): The member’s bio.
+            timezone (str): The member's time zone. Defaults to "Europe/London"
+            language (str): The member’s language. Defaults to "en"
+
         """
         resource = "members"
         if not is_valid_language(language):
@@ -201,19 +246,26 @@ class HootSweet:
         return self._make_request(resource, data=data)
 
     def get_member_organizations(self, member_id: str) -> List[Dict[str, Any]]:
-        """Retrieves the organizations that the member is in."""
+        """Retrieve the organizations that the member is in.
+
+        Args:
+            member_id (str): A Hootsuite member id.
+
+        """
         resource = "members/%s/organizations" % member_id
         return self._make_request(resource)
 
     def schedule_message(
         self, text: str, social_profile_ids: List[str], send_time: datetime, **kwargs
     ):
-        """Schedules a message to send on one or more social profiles
-        (except Pinterest). Returns an array of uniquely identifiable messages
-        (one per social profile requested).
+        """Schedule a message to send on one or more social profiles.
 
-        Scheduling a message to Pinterest can not be bundled with any other social
-        profiles.
+        Args:
+            text (str): The text of the message.
+            social_profile_ids (List[str]): A list of ids of social profiles that
+                will publish the message.
+            send_time (datetime): Time to send the message in UTC time.
+
         """
         resource = "messages"
         assert isinstance(send_time, datetime), "send_time must be a datetime"
@@ -240,7 +292,20 @@ class HootSweet:
         include_unscheduled_review_messages: bool = None,
         **kwargs,
     ) -> List[Dict[str, Any]]:
-        """Retrieves a list of outbound messages."""
+        """Retrieve a list of outbound messages.
+
+        Args:
+            start_time (datetime): The start date range of the messages returned.
+            end_time (datetime): The end date range of the messages returned.
+            state (MessageState): The state of the messages returned.
+            social_profile_ids (List[int]): The ids of social profiles of the
+                messages returned.
+            limit (int): Maximum number of messages to be returned. Defaults to 50.
+            include_unscheduled_review_messages(bool): Flag to retrieve unscheduled
+                (Send Now) review messages on top of scheduled ones retrieved from
+                time range query.
+
+        """
 
         resource = "messages"
         params = {}
@@ -265,16 +330,20 @@ class HootSweet:
         return self._make_request(resource, params=params)
 
     def get_message(self, message_id: str) -> Dict[str, Any]:
-        """Retrieves a message. A message is always associated with a single social
-        profile. Messages might be unavailable for a brief time during upload to
-        social networks.
+        """ Retrieve a message.
+
+        Args:
+            message_id (str): The Hootsuite message id.
+
         """
         resource = "messages/%s" % message_id
         return self._make_request(resource)
 
     def delete_message(self, message_id: str) -> Dict[str, Any]:
-        """Deletes a message. A message is always associated with a single social
-        profile.
+        """Delete a message.
+
+        Args:
+            message_id (str): The Hootsuite message id.
         """
         resource = "messages/%s" % message_id
         return self._make_request(resource, method="DELETE")
@@ -283,6 +352,12 @@ class HootSweet:
         self, message_id: str, sequence_number: int, reviewer_type: Reviewer
     ):
         """Approve a message.
+
+        Args:
+            message_id (str): A Hootsuite message id.
+            sequence_number (int): The sequence number of the message.
+            reviewer_type (Reviewer): The actor that will be approving he message.
+
         """
         resource = "messages/%s/approve" % message_id
         data = {"sequenceNumber": sequence_number, "reviewerType": reviewer_type.name}
@@ -297,6 +372,15 @@ class HootSweet:
         reviewer_type: Reviewer = None,
         **kwargs,
     ):
+        """Reject a message.
+
+        Args:
+            message_id (str): The Hootsuite message id.
+            reason (str): The rejection reason.
+            sequence (int): The sequence number of the message.
+            reviewer_type (Reviewer): The actor that will be rejecting the message.
+
+        """
         resource = "messages/%s/reject" % message_id
         data = {"reason": reason, "sequenceNumber": sequence}
 
@@ -304,8 +388,11 @@ class HootSweet:
             data["reviewerType"] = reviewer_type.name
         return self._make_request(resource, method="POST", data=data)
 
-    def get_message_review_history(
-        self, message_id: str
-    ) -> Dict[str, List[Dict[str, Any]]]:
+    def get_message_review_history(self, message_id: str) -> Dict:
+        """ Get a messages prescreening review history.
+
+        Args:
+            message_id (str): The Hootsuite message id.
+        """
         resource = "messages/%s/history" % message_id
         return self._make_request(resource)
