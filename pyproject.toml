@@ -3,7 +3,7 @@ name = "hootsweet"
 version = "0.6.5"
 description = "A python library for the HootSuite REST API."
 authors = ["Ciaran McCormick <ciaran@ciaranmccormick.com>"]
-readme = "README.md"
+readme = "README.rst"
 
 keywords = ["hootsuite", "api", "social"]
 
@@ -30,7 +30,7 @@ tox = "^3.14.5"
 tox-pyenv = "^1.1.0"
 pytest-cov = "^2.8.1"
 sphinx = "^3.0.1"
-recommonmark = "^0.6.0"
+sphinx-rtd-theme = "^0.4.3"
 
 [tool.coverage.run]
 source = [".",]
