@@ -12,10 +12,11 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from hootsweet.constants import MessageState, Reviewer
+from hootsweet.constants import ALLOWED_MIME_TYPES, MessageState, Reviewer
 from hootsweet.exceptions import (
     InvalidLanguage,
     InvalidTimezone,
+    MIMETypeNotAllowed,
     detect_and_raise_error,
 )
 from hootsweet.locale import is_valid_language, is_valid_timezone
@@ -396,3 +397,33 @@ class HootSweet:
         """
         resource = "messages/%s/history" % message_id
         return self._make_request(resource)
+
+    def create_media_upload_url(self, size_bytes: int, mime_type: str):
+        """Creates an Amazon S3 upload URL that can be used to transfer media to
+        Hootsuite.
+
+        Args:
+            size_bytes (int): Size in bytes of the media file to be uploaded.
+            mime_type (str): MIME type of the media to be uploaded. Supported
+            media types are video/mp4, image/gif, image/jpeg, image/jpg, image/png.
+
+        """
+
+        resource = "media"
+        if mime_type not in ALLOWED_MIME_TYPES:
+            acceptable_mimes = ", ".join(ALLOWED_MIME_TYPES)
+            raise MIMETypeNotAllowed(
+                f"{mime_type} is not allow use one of {acceptable_mimes}"
+            )
+        data = {"sizeBytes": size_bytes, "mimeType": mime_type}
+        return self._make_request(resource, method="POST", json=data)
+
+    def get_media_upload_status(self, media_id):
+        """Retrieves the status of a media upload to Hootsuite.
+
+        Args:
+            media_id (str): The Media ID to retrieve.
+
+        """
+        resource = "media/%s" % media_id
+        return self._make_request(resource, method="GET")

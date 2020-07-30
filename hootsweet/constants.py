@@ -1,5 +1,13 @@
 from enum import Enum
 
+MP4 = "video/mp4"
+GIF = "image/gif"
+JPEG = "image/jpeg"
+JPG = "image/jpg"
+PNG = "image/png"
+
+ALLOWED_MIME_TYPES = [MP4, GIF, JPEG, JPG, PNG]
+
 
 class Reviewer(Enum):
     EXTERNAL = 1

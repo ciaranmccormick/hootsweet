@@ -11,7 +11,7 @@ from hootsweet.api import (
     default_refresh_cb,
 )
 from hootsweet.constants import MessageState, Reviewer
-from hootsweet.exceptions import InvalidLanguage, InvalidTimezone
+from hootsweet.exceptions import InvalidLanguage, InvalidTimezone, MIMETypeNotAllowed
 from requests import Response
 from requests_oauthlib import OAuth2Session
 
@@ -54,6 +54,12 @@ GET_ENDPOINTS = [
         "get_message_review_history",
         "https://platform.hootsuite.com/v1/messages/1234/history",
         ("1234",),
+        {},
+    ),
+    (
+        "get_media_upload_status",
+        "https://platform.hootsuite.com/v1/media/abc1234",
+        ("abc1234",),
         {},
     ),
 ]
@@ -297,3 +303,25 @@ def test_get_outbound_messages(mock_session):
         "GET", expected_url, params=expected_params
     )
     assert actual == data["data"]
+
+
+@patch("hootsweet.api.OAuth2Session", spec=OAuth2Session, token=test_token)
+def test_create_media_upload_url(mock_session):
+    response = Mock(status_code=200, spec=Response)
+    mock_session.return_value.request.return_value = response
+    mock_session.return_value.token = {"expires_in": 10}
+    data = {"data": {}}
+    response.json.return_value = data
+
+    hoot_suite = HootSweet("client_id", "client_secret", token=test_token)
+
+    with pytest.raises(MIMETypeNotAllowed):
+        hoot_suite.create_media_upload_url(5000, "image/nnn")
+
+    args = (500, "image/png")
+    expected_url = "https://platform.hootsuite.com/v1/media"
+    expected_data = {"sizeBytes": args[0], "mimeType": args[1]}
+    hoot_suite.create_media_upload_url(*args)
+    mock_session.return_value.request.assert_called_once_with(
+        "POST", expected_url, json=expected_data
+    )
