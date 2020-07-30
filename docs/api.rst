@@ -1,0 +1,3 @@
+
+.. automodule:: hootsweet.api
+   :members:

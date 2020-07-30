@@ -18,12 +18,13 @@ Hootsweet
     :target: https://hootsweet.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. automodule:: hootsweet.api
-   :members:
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   getting_started
+   api
 
 
 Indices and tables
