@@ -113,17 +113,15 @@ def test_schedule_message(mock_session):
     ids_ = ["1234", "12345"]
     send_time = datetime.datetime(2020, 1, 1, 13, 10, 14)
     hoot_suite.schedule_message(text, ids_, send_time=send_time)
-    expected_json = json.dumps(
-        {
-            "text": text,
-            "socialProfileIds": ids_,
-            "scheduledSendTime": send_time.strftime(ISO_FORMAT),
-            "emailNotification": False,
-        }
-    )
+    data = {
+        "text": text,
+        "socialProfileIds": ids_,
+        "scheduledSendTime": send_time.strftime(ISO_FORMAT),
+        "emailNotification": False,
+    }
     expected_url = "https://platform.hootsuite.com/v1/messages"
     mock_session.return_value.request.assert_called_once_with(
-        "POST", expected_url, data=expected_json
+        "POST", expected_url, json=data
     )
 
 

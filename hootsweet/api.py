@@ -257,7 +257,7 @@ class HootSweet:
         return self._make_request(resource)
 
     def schedule_message(
-        self, text: str, social_profile_ids: List[str], send_time: datetime, **kwargs
+        self, text: str, social_profile_ids: List[str], send_time: datetime, **kwargs,
     ):
         """Schedule a message to send on one or more social profiles.
 
@@ -280,8 +280,7 @@ class HootSweet:
             "emailNotification": False,
         }
         data.update(kwargs)
-        json_ = json.dumps(data)
-        return self._make_request(resource, method="POST", data=json_)
+        return self._make_request(resource, method="POST", json=data)
 
     def get_outbound_messages(
         self,

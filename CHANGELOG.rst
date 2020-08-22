@@ -3,6 +3,12 @@ Changelog
 #########
 
 -----
+0.7.0
+-----
+
+- Fixed bug releating to scheduling messages with media attached.
+
+-----
 0.6.6
 -----
 
