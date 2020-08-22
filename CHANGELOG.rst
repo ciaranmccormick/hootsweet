@@ -3,6 +3,13 @@ Changelog
 #########
 
 -----
+0.7.1
+-----
+
+- Added messages with media section to readme
+
+
+-----
 0.7.0
 -----
 
