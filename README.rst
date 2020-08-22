@@ -83,10 +83,56 @@ Messages
     text = "A message"
     social_profile_ids = ["1234", "12345"]
     send_time = datetime(2020, 1, 1, 12, 40, 15)
-    message = client.schedule_message(text=text, social_profile_ids=social_profile_ids,  send_time=send_time)
+    message = client.schedule_message(text=text, social_profile_ids=social_profile_ids,
+                                send_time=send_time)
 
     # Get message
     message = client.get_message(message_id="98765")
 
     # Delete message
     client.delete_message(message_id="98765")
+
+
+Messages with Media
+===================
+
+HootSuite uses it's own AWS Bucket to add media to a message. To
+attach media to you message you need to first upload the media
+to HootSuite's bucket.
+
+.. code-block:: python
+
+    token = {
+    "access_token": "e9a90a81-xf2d-dgh3-cfsd-23jhvn76",
+    "token_Type": "Bearer",
+    "expires_in": 2592000,
+    "refresh_token": "82d82cf4-76gf-gfds-nt3k-lzpo12jg",
+    "scope": "offline"
+    }
+
+    client = HootSweet("client_id", "client_secret", token=token)
+
+    mime_type = "image/png"
+    file_path = Path("/path/to/file.png")
+    file_size = file_path.stat().st_size
+    upload_details = client.create_media_upload_url(file_size, mime_type)
+    upload_url = upload_details["uploadUrl"]
+    media_id = upload_details["id"]
+
+    # The number of seconds you have to upload the media
+    expires_in = upload_details["uploadUrlDurationSeconds"]
+
+    # Upload the media
+    with file_path.open("rb") as f:
+        content = f.read()
+        headers = {"Content-Type": mime_type, "Content-Length": str(file_size)}
+        # Make sure that this request returns a 200
+        requests.put(upload_url, headers=headers, data=content)
+
+    # Schedule a message
+    text = "A message"
+    social_profile_ids = ["1234", "12345"]
+    send_time = datetime(2020, 1, 1, 12, 40, 15)
+    media = [{"id": media_id}]
+    message = client.schedule_message(text=text, social_profile_ids=social_profile_ids,
+                                  send_time=send_time, media=media)
