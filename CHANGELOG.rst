@@ -3,6 +3,13 @@ Changelog
 #########
 
 -----
+0.6.6
+-----
+
+- Added method to create media url
+- Added method to get media url status
+
+-----
 0.6.5
 -----
 
